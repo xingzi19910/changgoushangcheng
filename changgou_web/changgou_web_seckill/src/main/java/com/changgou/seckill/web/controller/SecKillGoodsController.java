@@ -50,5 +50,5 @@ public class SecKillGoodsController {
         Result<List<SeckillGoods>> listResult = secKillGoodsFeign.list(DateUtil.formatStr(time));
         return listResult;
     }
-    
+
 }
