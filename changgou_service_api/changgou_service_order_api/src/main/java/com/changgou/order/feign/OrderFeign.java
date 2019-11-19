@@ -18,5 +18,7 @@ public interface OrderFeign {
     @GetMapping("/{id}")
     public Result<Order> findById(@PathVariable String id);
 
+    @GetMapping("/findOrderByUsername")
+    public Result<Order> findOrderByUsername(@RequestParam("username") String username);
 
 }

@@ -132,4 +132,11 @@ public class OrderController {
         orderService.confirmTask(orderId,operator);
         return new Result(true,StatusCode.OK,"确认收货成功");
     }
+        //根据当前登录人姓名查询当前用户的所有订单信息
+    @GetMapping("/findOrderByUsername")
+    public Result findOrderByUsername(String username){
+        Order order = orderService.findOrderByUsername(username);
+        return new Result(true,StatusCode.OK,"查询订单成功",order);
+    }
+
 }

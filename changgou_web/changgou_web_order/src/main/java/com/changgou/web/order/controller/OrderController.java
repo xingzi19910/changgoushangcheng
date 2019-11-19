@@ -67,4 +67,12 @@ public class OrderController {
         model.addAttribute("payMoney", resultData.getPayMoney());
         return "pay";
      }
+
+    @GetMapping("/findOrderByUsername")
+    public String findOrderByUsername(String username,Model model){
+
+        Order order = orderFeign.findOrderByUsername(username).getData();
+        model.addAttribute("order",order);
+        return "center-order-send";
+    }
 }

@@ -407,16 +407,23 @@
         },
             add:function (id) {
                 app.msg='正在下单';
-                axios.get("/api/seckill/seckillorder/add?time="+moment(app.dateMenus[0]).format("YYYYMMDDHH")+"&id="+id).then(function (res) {
-                    if (res.data.flag){
-                        alert("抢单成功,即将进入支付!");
-                        app.msg='抢单成功,即将进入支付!';
+                //获取随机数
+                axios.get("/api/seckill/seckillorder/getToken").then(function (response) {
+                    var random =response.data;
+                    axios.get("/api/seckill/seckillorder/add?time="+moment(app.dateMenus[0]).format("YYYYMMDDHH")+"&id="+id+"&random="+random).then(function (res) {
+                        if (res.data.flag){
+                            alert("抢单成功,即将进入支付!");
+                            app.msg='抢单成功,即将进入支付!';
 
-                    } else {
-                        app.msg='抢单失败';
-                        alert("抢单失败")
-                    }
+                        } else {
+                            app.msg='抢单失败';
+                            alert("抢单失败")
+                        }
+                    });
+                    
                 });
+
+
             }
 
 

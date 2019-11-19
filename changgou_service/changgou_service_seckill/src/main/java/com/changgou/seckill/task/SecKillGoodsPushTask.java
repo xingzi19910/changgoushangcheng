@@ -3,7 +3,6 @@ package com.changgou.seckill.task;
 import com.changgou.seckill.dao.SeckillGoodsMapper;
 import com.changgou.seckill.pojo.SeckillGoods;
 import com.changgou.util.DateUtil;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;

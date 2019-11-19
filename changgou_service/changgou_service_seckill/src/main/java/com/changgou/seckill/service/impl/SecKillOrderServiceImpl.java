@@ -88,9 +88,9 @@ public class SecKillOrderServiceImpl implements SecKillOrderService {
      */
     private String preventRepeatCommit(String username, Long id) {
         //自定义redis_key
-        String redisKey = "seckill_user_" + username + "_id_";
+        String redisKey = "seckill_user_" + username + "_id_"+id;
         //使用 increment自动增长  自动增长1
-        Long count = redisTemplate.opsForValue().increment(redisKey, 1);
+        long count = redisTemplate.opsForValue().increment(redisKey, 1);
         if (count == 1) {
             //代表当前的用户是第一次访问 放行
             //对当前的key设置一个五分钟的有效期

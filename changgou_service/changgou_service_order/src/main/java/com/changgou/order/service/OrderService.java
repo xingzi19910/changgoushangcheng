@@ -1,6 +1,7 @@
 package com.changgou.order.service;
 
 import com.changgou.order.pojo.Order;
+import com.changgou.order.pojo.OrderItem;
 import com.github.pagehelper.Page;
 
 import java.util.List;
@@ -81,4 +82,7 @@ public interface OrderService {
     void confirmTask(String orderId,String operator);
         //自动确认收货
     void autoTack();
+
+    Order findOrderByUsername(String username);
+
 }

@@ -248,21 +248,21 @@ public class OrderServiceImpl implements OrderService {
         System.out.println("关闭订单通过校验" + orderId);
         //调用微信订单查询 检测支付状态
         Map wxQueryMap = (Map) wxPayFeign.queryOrder(orderId).getData();
-        System.out.println("查询微信支付订单: "+wxQueryMap);
+        System.out.println("查询微信支付订单: " + wxQueryMap);
         //如果支付状态是成功 进行补偿
-        if ("SUCCESS".equals(wxQueryMap.get("trade_state"))){
-            updatePayStatus(orderId,(String)wxQueryMap.get("transaction_id"));
+        if ("SUCCESS".equals(wxQueryMap.get("trade_state"))) {
+            updatePayStatus(orderId, (String) wxQueryMap.get("transaction_id"));
             System.out.println("补偿");
         }
         //如果是未支付状态关闭订单   修改mysql中的订单信息 新增订单日志,恢复商品的库存
-        if ("NOTPAY".equals(wxQueryMap.get("trade_state"))){
+        if ("NOTPAY".equals(wxQueryMap.get("trade_state"))) {
             System.out.println("订单未支付 关闭订单");
             order.setCloseTime(new Date());//关闭时间
             order.setOrderStatus("4"); //关闭状态
             orderMapper.updateByPrimaryKeySelective(order);
             //记录订单变动日志
             OrderLog orderLog = new OrderLog();
-            orderLog.setId(idWorker.nextId()+"");
+            orderLog.setId(idWorker.nextId() + "");
             orderLog.setOperater("system"); //操作员系统
             orderLog.setOperateTime(new Date());//当前日期
             orderLog.setOrderStatus("4");
@@ -275,31 +275,32 @@ public class OrderServiceImpl implements OrderService {
             List<OrderItem> itemList = orderItemMapper.select(orderItem);
             for (OrderItem item : itemList) {
                 //回滚库存
-                skuFeign.resumeStockNum(item.getSkuId(),item.getNum());
+                skuFeign.resumeStockNum(item.getSkuId(), item.getNum());
             }
             //关闭微信订单
             wxPayFeign.closeOrder(orderId);
         }
     }
+
     //批量发货
     @Override
     @Transactional
     public void batchSend(List<Order> orders) {
         //判断每一个订单的运单号和物流公司的值是否存在
         for (Order order : orders) {
-            if (order.getId()==null){
-                throw  new RuntimeException("订单号不存在");
+            if (order.getId() == null) {
+                throw new RuntimeException("订单号不存在");
 
             }
-            if (order.getShippingCode()==null||order.getShippingName()==null){
-                throw  new RuntimeException("快递单号和快递公司不能为空");
+            if (order.getShippingCode() == null || order.getShippingName() == null) {
+                throw new RuntimeException("快递单号和快递公司不能为空");
             }
         }
         //循环订单,进行订单状态的校验
         for (Order order : orders) {
             Order order1 = orderMapper.selectByPrimaryKey(order.getId());
 
-            if (!"0".equals(order1.getConsignStatus())||!"1".equals(order1.getOrderStatus())){
+            if (!"0".equals(order1.getConsignStatus()) || !"1".equals(order1.getOrderStatus())) {
                 throw new RuntimeException("订单状态有误");
             }
         }
@@ -308,15 +309,15 @@ public class OrderServiceImpl implements OrderService {
             order.setOrderStatus("2");// 订单状态已发货
             order.setConsignStatus("1");// 发货状态 已发货
             order.setConsignTime(new Date());//发货时间
-            order.setUpdateTime( new Date());//更新时间
+            order.setUpdateTime(new Date());//更新时间
             orderMapper.updateByPrimaryKeySelective(order);
             //记录订单变动日志
             OrderLog orderLog = new OrderLog();
-            orderLog.setId(idWorker.nextId()+"");
+            orderLog.setId(idWorker.nextId() + "");
             orderLog.setOperateTime(new Date());//当前日期
-            orderLog.setOperater( "admin" );//系统管理员
+            orderLog.setOperater("admin");//系统管理员
             orderLog.setOrderStatus("2"); //已完成
-            orderLog.setConsignStatus( "1" );//发状态（0未发货 1已发货）
+            orderLog.setConsignStatus("1");//发状态（0未发货 1已发货）
             orderLog.setOrderId(order.getId());
             orderLogMapper.insertSelective(orderLog);
         }
@@ -324,6 +325,7 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * 手动确认收货
+     *
      * @param orderId
      * @param operator
      */
@@ -331,26 +333,27 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public void confirmTask(String orderId, String operator) {
         Order order = orderMapper.selectByPrimaryKey(orderId);
-        if (order==null){
-            throw  new RuntimeException("订单不存在");
+        if (order == null) {
+            throw new RuntimeException("订单不存在");
         }
-        if (!"1".equals(order.getConsignStatus())){
+        if (!"1".equals(order.getConsignStatus())) {
             throw new RuntimeException("订单未发货");
         }
         order.setConsignStatus("2"); //配送状态 已送达
         order.setOrderStatus("3"); //订单状态 已完成
         order.setUpdateTime(new Date());
-        order.setEndTime( new Date() );//交易结束
+        order.setEndTime(new Date());//交易结束
         //记录订单日志变动
         OrderLog orderLog = new OrderLog();
-        orderLog.setId( idWorker.nextId()+"" );
+        orderLog.setId(idWorker.nextId() + "");
         orderLog.setOperateTime(new Date());//当前日期
-        orderLog.setOperater( operator );//操作员
+        orderLog.setOperater(operator);//操作员
         orderLog.setOrderStatus("3");  //订单状态
         orderLog.setOrderId(order.getId()); //订单号
         orderLogMapper.insertSelective(orderLog);
 
     }
+
     //自动收货
     @Override
     @Transactional
@@ -358,23 +361,30 @@ public class OrderServiceImpl implements OrderService {
         //1.从订单的配置表中获取订单自动确认的时点
         OrderConfig orderConfig = orderConfigMapper.selectByPrimaryKey("1");
         //2.得到当前的时间节点向前数(订单自动确认的时间节点)天,作为过期的时间节点
-        LocalDate date =LocalDate.now();
+        LocalDate date = LocalDate.now();
         LocalDate days = date.plusDays(-orderConfig.getTakeTimeout());
         System.out.println(days);
         //3.从订单表中获取相关符合条件的数据(发货时间小于过期时间,收货状态为未确认)
-                //按条件查询 获取订单列表
-            Example example = new Example(Order.class);
+        //按条件查询 获取订单列表
+        Example example = new Example(Order.class);
         Example.Criteria criteria = example.createCriteria();
 
-        criteria.andLessThan("consignTime",days);
-        criteria.andEqualTo("orderStatus","2");
-            //查询获取订单集合
+        criteria.andLessThan("consignTime", days);
+        criteria.andEqualTo("orderStatus", "2");
+        //查询获取订单集合
         List<Order> orders = orderMapper.selectByExample(example);
         //循环遍历 执行确认收货
         for (Order order : orders) {
-            System.out.println("过期订单: " +order.getId()+""+order.getConsignStatus());
-            confirmTask(order.getId(),"system");
+            System.out.println("过期订单: " + order.getId() + "" + order.getConsignStatus());
+            confirmTask(order.getId(), "system");
         }
+    }
+
+    //根据当前登录人姓名查询当前用户的所有订单信息
+    @Override
+    public Order findOrderByUsername(String username) {
+
+        return orderMapper.findOrderByUsername(username);
     }
 
     /**
